@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import './Chat.css'
+import "./Chat.css"
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
+  const api_key = 'sk-';
+  const endpoint = 'https://api.openai.com/v1/completions';
+  const model = 'text-davinci-003';
+  const max_tokens = 7;
+  const temperature = 0;
 
   useEffect(() => {
     const initialMessage = {
@@ -28,15 +32,33 @@ const Chatbot = () => {
 
     setMessages([...messages, newMessage]);
 
-    // Call GPT API to get bot response
-    const response = await axios.post('/gpt-api', { input: inputValue });
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${api_key}`
+        },
+        body: JSON.stringify({
+          model,
+          prompt: inputValue,
+          max_tokens,
+          temperature
+        })
+      });
 
-    const botMessage = {
-      message: response.data.message,
-      sender: 'bot',
-    };
+      const data = await response.json();
 
-    setMessages([...messages, botMessage]);
+      const botMessage = {
+        message: data.choices[0].text.trim(),
+        sender: 'bot',
+      };
+
+      setMessages([...messages, botMessage]);
+
+    } catch (error) {
+      console.error(error);
+    }
 
     setInputValue('');
   };
